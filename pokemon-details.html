@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokémon Details</title>
+  <style>
+    /* Basic styling for Pokémon details */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 14px 0;
+    }
+
+    .pokemon-details {
+      text-align: center;
+      margin: 20px;
+    }
+
+    img {
+      max-width: 100%;
+    }
+
+    .abilities {
+      margin-top: 20px;
+    }
+
+    .moves {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Pokémon Details</h1>
+  </header>
+
+  <div class="pokemon-details" id="pokemonDetails"></div>
+
+  <script>
+    async function fetchData(url) {
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    }
+
+    function displayPokemonDetails(pokemon, description, abilities, moves) {
+      const pokemonDetailsDiv = document.getElementById('pokemonDetails');
+      const name = document.createElement('h2');
+      name.textContent = pokemon.name;
+      pokemonDetailsDiv.appendChild(name);
+      const image = document.createElement('img');
+      image.src = pokemon.sprites.front_default;
+      image.alt = pokemon.name;
+      pokemonDetailsDiv.appendChild(image);
+      const descriptionParagraph = document.createElement('p');
+      descriptionParagraph.textContent = description;
+      pokemonDetailsDiv.appendChild(descriptionParagraph);
+
+      // Display abilities
+      const abilitiesDiv = document.createElement('div');
+      abilitiesDiv.classList.add('abilities');
+      const abilitiesHeader = document.createElement('h3');
+      abilitiesHeader.textContent = 'Abilities:';
+      abilitiesDiv.appendChild(abilitiesHeader);
+      const abilitiesList = document.createElement('ul');
+      abilities.forEach(ability => {
+        const abilityItem = document.createElement('li');
+        abilityItem.textContent = ability;
+        abilitiesList.appendChild(abilityItem);
+      });
+      abilitiesDiv.appendChild(abilitiesList);
+      pokemonDetailsDiv.appendChild(abilitiesDiv);
+
+      // Display moves
+      const movesDiv = document.createElement('div');
+      movesDiv.classList.add('moves');
+      const movesHeader = document.createElement('h3');
+      movesHeader.textContent = 'Moves:';
+      movesDiv.appendChild(movesHeader);
+      const movesList = document.createElement('ul');
+      moves.forEach(move => {
+        const moveItem = document.createElement('li');
+        moveItem.textContent = move;
+        movesList.appendChild(moveItem);
+      });
+      movesDiv.appendChild(movesList);
+      pokemonDetailsDiv.appendChild(movesDiv);
+
+      // Add more details as needed
+    }
+
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    async function loadPokemonDetails(pokemonId) {
+      const apiUrl = `https://pokeapi.co/api/v2/pokemon/${pokemonId}/`;
+      const pokemon = await fetchData(apiUrl);
+      return pokemon;
+    }
+
+    async function loadPokemonDescription(pokemonId) {
+      const speciesUrl = `https://pokeapi.co/api/v2/pokemon-species/${pokemonId}/`;
+      const speciesData = await fetchData(speciesUrl);
+      return speciesData.flavor_text_entries.find(entry => entry.language.name === 'en').flavor_text;
+    }
+
+    async function loadPokemonAbilities(pokemonId) {
+      const apiUrl = `https://pokeapi.co/api/v2/pokemon/${pokemonId}/`;
+      const pokemonData = await fetchData(apiUrl);
+      const abilities = pokemonData.abilities.map(ability => ability.ability.name);
+      return abilities;
+    }
+
+    async function loadPokemonMoves(pokemonId) {
+      const apiUrl = `https://pokeapi.co/api/v2/pokemon/${pokemonId}/`;
+      const pokemonData = await fetchData(apiUrl);
+      const moves = pokemonData.moves.slice(0, 5).map(move => move.move.name); // Displaying the first 5 moves for each Pokémon
+      return moves;
+    }
+
+    // Load Pokémon details, description, abilities, and moves based on the ID from the URL parameter
+    const pokemonId = getQueryParam('id');
+    if (pokemonId) {
+      Promise.all([
+        loadPokemonDetails(pokemonId),
+        loadPokemonDescription(pokemonId),
+        loadPokemonAbilities(pokemonId),
+        loadPokemonMoves(pokemonId),
+      ])
+        .then(([pokemonDetails, description, abilities, moves]) =>
+          displayPokemonDetails(pokemonDetails, description, abilities, moves)
+        )
+        .catch(error => console.error('Error loading Pokémon details:', error));
+    } else {
+      console.error('Pokemon ID not found in the URL.');
+    }
+  </script>
+
+</body>
+</html>
